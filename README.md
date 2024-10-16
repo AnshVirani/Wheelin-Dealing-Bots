@@ -1,7 +1,7 @@
 # Wheelin-Dealing-Bots
 This project showcases the development of a real-time control and coordination system, , multi-robot coordination, and collision avoidance, making it ideal for advanced IoT transportation solutions using multiple omni-wheel robots based on ROS 2 and ArUco marker detection.
 
-# Wheelin' and Dealin' Bots: Multi-Robot Coordination using ROS 2 and Aruco Marker Detection
+## Wheelin' and Dealin' Bots: Multi-Robot Coordination using ROS 2 and Aruco Marker Detection
 
 ## Table of Contents
 1. [Project Overview](#project-overview)
