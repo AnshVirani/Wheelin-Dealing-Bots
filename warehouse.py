@@ -8,10 +8,6 @@ marker_dict = aruco.getPredefinedDictionary(aruco.DICT_5X5_250)
 # Create parameters for marker detection and adjust some settings
 param_markers = aruco.DetectorParameters()
 
-# Optional: Adjust parameters to improve detectionimport cv2 as cv
-from cv2 import aruco
-import numpy as np
-
 # Dictionary to specify type of the ArUco marker
 marker_dict = aruco.getPredefinedDictionary(aruco.DICT_5X5_250)
 
@@ -23,7 +19,7 @@ param_markers.cornerRefinementMethod = aruco.CORNER_REFINE_CONTOUR  # Refine det
 param_markers.adaptiveThreshConstant = 7  # Adjust thresholding for better marker detection
 
 # Utilize the default camera/webcam driver
-cap = cv.VideoCapture(2)
+cap = cv.VideoCapture(0)
 
 # Iterate through frames from the live video feed
 while True:
