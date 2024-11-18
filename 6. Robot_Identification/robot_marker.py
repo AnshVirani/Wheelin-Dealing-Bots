@@ -14,12 +14,12 @@ PIXELS_PER_CM = 10
 # Convert marker size to pixels
 marker_size_px = int(MARKER_SIZE_CM * PIXELS_PER_CM)
 
-# Generate markers for 0, 1, 2, 3, and 19, each of size based on the real world
+# Generate markers for 0, 1, 2, 3, and 4, each of size based on the real world
 marker_0 = cv.aruco.generateImageMarker(marker_dict, 0, marker_size_px)  # Marker 0
 marker_1 = cv.aruco.generateImageMarker(marker_dict, 1, marker_size_px)  # Marker 1
 marker_2 = cv.aruco.generateImageMarker(marker_dict, 2, marker_size_px)  # Marker 2
 marker_3 = cv.aruco.generateImageMarker(marker_dict, 3, marker_size_px)  # Marker 3
-marker_19 = cv.aruco.generateImageMarker(marker_dict, 19, marker_size_px)  # Marker 19 (for the robot)
+marker_19 = cv.aruco.generateImageMarker(marker_dict, 4, marker_size_px)  # Marker 19 (for the robot)
 
 # Create a blank canvas with a grey background, scaled to 150 cm x 60 cm (in pixels)
 canvas_width = int(150 * PIXELS_PER_CM)

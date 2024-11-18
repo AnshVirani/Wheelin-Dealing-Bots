@@ -2,10 +2,10 @@ import cv2 as cv
 import numpy as np
 
 # Load the previously generated markers (0, 1, 2, 3)
-marker_0 = cv.imread(r"C:\Users\viran\Downloads\OpenCV-main\1. generate_markers\markers\marker_0.png", cv.IMREAD_GRAYSCALE)
-marker_1 = cv.imread(r"C:\Users\viran\Downloads\OpenCV-main\1. generate_markers\markers\marker_1.png", cv.IMREAD_GRAYSCALE)
-marker_2 = cv.imread(r"C:\Users\viran\Downloads\OpenCV-main\1. generate_markers\markers\marker_2.png", cv.IMREAD_GRAYSCALE)
-marker_3 = cv.imread(r"C:\Users\viran\Downloads\OpenCV-main\1. generate_markers\markers\marker_3.png", cv.IMREAD_GRAYSCALE)
+marker_0 = cv.imread(r"C:\Users\viran\Downloads\OpenCV-main\Wheelin-Dealing-Bots\1. generate_markers\markers\marker_0.png", cv.IMREAD_GRAYSCALE)
+marker_1 = cv.imread(r"C:\Users\viran\Downloads\OpenCV-main\Wheelin-Dealing-Bots\1. generate_markers\markers\marker_1.png", cv.IMREAD_GRAYSCALE)
+marker_2 = cv.imread(r"C:\Users\viran\Downloads\OpenCV-main\Wheelin-Dealing-Bots\1. generate_markers\markers\marker_2.png", cv.IMREAD_GRAYSCALE)
+marker_3 = cv.imread(r"C:\Users\viran\Downloads\OpenCV-main\Wheelin-Dealing-Bots\1. generate_markers\markers\marker_3.png", cv.IMREAD_GRAYSCALE)
 
 # Check if all markers are loaded properly
 if marker_0 is None or marker_1 is None or marker_2 is None or marker_3 is None:
@@ -41,7 +41,7 @@ canvas[PADDING*2+MARKER_SIZE:PADDING*2+MARKER_SIZE*2, PADDING*2+MARKER_SIZE:PADD
 cv.imshow("4 Corner Markers", canvas)
 
 # Optionally save the canvas
-cv.imwrite(r"C:\path_to_save_output\corner_markers.png", canvas)
+cv.imwrite(r"C:\Users\viran\Downloads\OpenCV-main\Wheelin-Dealing-Bots\corner_markers.png", canvas)
 
 cv.waitKey(0)
 cv.destroyAllWindows()

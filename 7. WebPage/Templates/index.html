@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robot Tracking</title>
+    <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <h1>Real-Time Robot Tracking</h1>
+    <canvas id="trackingCanvas" width="750" height="300"></canvas>
+    <script>
+        const canvas = document.getElementById("trackingCanvas");
+        const ctx = canvas.getContext("2d");
+        const pixelsPerCm = 5;
+
+        const realWidth = 150 * pixelsPerCm;
+        const realHeight = 60 * pixelsPerCm;
+
+        function drawPath(path) {
+            ctx.strokeStyle = "green";
+            ctx.lineWidth = 2;
+            for (let i = 1; i < path.length; i++) {
+                const x1 = path[i - 1].x * pixelsPerCm;
+                const y1 = realHeight - path[i - 1].y * pixelsPerCm;
+                const x2 = path[i].x * pixelsPerCm;
+                const y2 = realHeight - path[i].y * pixelsPerCm;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+        }
+
+        function drawEntity(x, y, label, color) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x * pixelsPerCm, realHeight - y * pixelsPerCm, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "black";
+            ctx.fillText(label, x * pixelsPerCm + 10, realHeight - y * pixelsPerCm - 10);
+        }
+
+        const socket = io();
+
+        // Listen for updates from the server
+        socket.on("update_position", (data) => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw robot
+            if (data.robot) {
+                drawEntity(data.robot.x, data.robot.y, "Robot", "green");
+            }
+
+            // Draw object
+            if (data.object) {
+                drawEntity(data.object.x, data.object.y, "Object", "blue");
+            }
+
+            // Draw path
+            if (data.path) {
+                drawPath(data.path);
+            }
+        });
+
+        // Start tracking when the page loads
+        socket.emit("start_tracking");
+    </script>
+</body>
+</html>
