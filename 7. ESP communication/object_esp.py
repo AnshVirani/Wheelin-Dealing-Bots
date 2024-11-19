@@ -1,13 +1,13 @@
-from flask import Flask, render_template
-from flask_socketio import SocketIO
 import cv2 as cv
 from cv2 import aruco
 import numpy as np
-import threading
+import math
+import requests
+import tkinter as tk
+from threading import Thread
 
-# Initialize Flask and SocketIO
-app = Flask(__name__)
-socketio = SocketIO(app)
+# ESP32 Configuration
+ESP32_IP = "192.168.137.8"  # Replace with your ESP32's IP address
 
 # Load in the calibration data
 calib_data = np.load(r"C:\Users\viran\Downloads\OpenCV-main\Wheelin-Dealing-Bots\4. calib_data\MultiMatrix.npz")
@@ -20,13 +20,13 @@ MARKER_SIZE = 6  # Size of the markers in cm
 
 # Define the known coordinates of each corner marker
 marker_coords = {
-    0: (0, 0),        # Marker 0 at (0, 0) - Top-left
-    1: (150, 0),      # Marker 1 at (150, 0) - Top-right
-    2: (150, -60),    # Marker 2 at (150, -60) - Bottom-right
-    3: (0, -60),      # Marker 3 at (0, -60) - Bottom-left
+    0: (0, 0),      # Marker 0 at (0, 0)
+    1: (150, 0),    # Marker 1 at (150, 0)
+    2: (150, -60),  # Marker 2 at (150, -60)
+    3: (0, -60),    # Marker 3 at (0, -60)
 }
 
-# Define marker IDs for the robot and object
+# Define marker IDs for the robot and the object
 ROBOT_MARKER_ID = 4
 OBJECT_MARKER_ID = 5
 
@@ -40,85 +40,107 @@ def get_real_world_coordinates(tVec, H):
     point_world = np.dot(H, point_camera.T)  # Transform to the world frame
     return point_world[0] / point_world[2], point_world[1] / point_world[2]  # Normalize by z
 
-# Robot tracking logic
-def track_robot():
+# Function to send coordinates to ESP32
+def send_coordinates_to_esp(robot_position, object_position):
+    try:
+        response = requests.get(
+            f"http://{ESP32_IP}/set_coordinates",
+            params={
+                "robotX": robot_position[0],
+                "robotY": robot_position[1],
+                "objectX": object_position[0],
+                "objectY": object_position[1],
+            },
+        )
+        if response.status_code == 200:
+            print("Coordinates sent successfully!")
+        else:
+            print(f"Failed to send coordinates: {response.status_code}, {response.text}")
+    except Exception as e:
+        print(f"Error sending coordinates to ESP32: {e}")
+
+# Function to track and send coordinates
+def track_and_send():
     cap = cv.VideoCapture(0)
-    robot_path = []
-    homography_matrix = None  # Homography matrix to map camera frame to world frame
+    robot_position = None
+    object_position = None
+    homography_matrix = None
 
     while True:
         ret, frame = cap.read()
         if not ret:
             break
 
-        # Convert the frame to grayscale for marker detection
         gray_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+        marker_corners, marker_IDs, _ = aruco.detectMarkers(
+            gray_frame, marker_dict, parameters=param_markers
+        )
 
-        # Detect markers in the grayscale frame
-        marker_corners, marker_IDs, _ = aruco.detectMarkers(gray_frame, marker_dict)
-
-        # If markers are detected
-        if marker_corners and marker_IDs is not None:
-            # Estimate pose of the detected markers
+        if marker_corners:
             rVec, tVec, _ = aruco.estimatePoseSingleMarkers(
                 marker_corners, MARKER_SIZE, cam_mat, dist_coef
             )
 
-            # Store the camera frame positions and real-world positions of corner markers
             camera_points = []
             world_points = []
 
             for i, (ids, corners) in enumerate(zip(marker_IDs, marker_corners)):
                 marker_id = ids[0]
 
-                # Process the corner markers (IDs 0, 1, 2, 3)
                 if marker_id in marker_coords:
                     camera_points.append([tVec[i][0][0], tVec[i][0][1]])
                     world_points.append(marker_coords[marker_id])
 
-            # Calculate the homography matrix if all 4 corner markers are detected
             if len(camera_points) == 4:
                 camera_points = np.array(camera_points, dtype=np.float32)
                 world_points = np.array(world_points, dtype=np.float32)
                 homography_matrix, _ = cv.findHomography(camera_points, world_points)
 
-            # Process robot and object markers
             for i, (ids, corners) in enumerate(zip(marker_IDs, marker_corners)):
                 marker_id = ids[0]
 
-                # Process the robot marker
                 if marker_id == ROBOT_MARKER_ID and homography_matrix is not None:
                     robot_position = get_real_world_coordinates(tVec[i], homography_matrix)
-                    robot_path.append(robot_position)
 
-                    # Send robot position and path to the web client
-                    socketio.emit("update_position", {
-                        "robot": {"x": robot_position[0], "y": robot_position[1]},
-                        "path": [{"x": p[0], "y": p[1]} for p in robot_path]
-                    })
-
-                # Process the object marker
                 if marker_id == OBJECT_MARKER_ID and homography_matrix is not None:
                     object_position = get_real_world_coordinates(tVec[i], homography_matrix)
 
-                    # Send object position to the web client
-                    socketio.emit("update_position", {
-                        "object": {"x": object_position[0], "y": object_position[1]},
-                    })
+        if robot_position and object_position:
+            print(f"Robot Position: {robot_position}, Object Position: {object_position}")
+            send_coordinates_to_esp(robot_position, object_position)
+            break
+
+        cv.imshow("Robot and Object Tracking", frame)
+        if cv.waitKey(1) & 0xFF == ord("q"):
+            break
 
     cap.release()
+    cv.destroyAllWindows()
 
-# Route for serving the webpage
-@app.route("/")
-def index():
-    return render_template("index.html")
-
-# Start the tracking in a background thread
-@socketio.on("start_tracking")
+# Function to launch tracking in a separate thread
 def start_tracking():
-    tracking_thread = threading.Thread(target=track_robot)
-    tracking_thread.daemon = True
+    tracking_thread = Thread(target=track_and_send, daemon=True)
     tracking_thread.start()
 
+# GUI for Start Button
+def create_gui():
+    root = tk.Tk()
+    root.title("Robot and Object Tracker")
+
+    tk.Label(root, text="Robot and Object Tracking", font=("Arial", 16)).pack(pady=10)
+
+    start_button = tk.Button(
+        root,
+        text="Start",
+        font=("Arial", 14),
+        bg="green",
+        fg="white",
+        command=start_tracking
+    )
+    start_button.pack(pady=20)
+
+    root.mainloop()
+
+# Run the GUI
 if __name__ == "__main__":
-    socketio.run(app, debug=True)
+    create_gui()
