@@ -21,8 +21,8 @@ marker_coords = {
 }
 
 # Define marker IDs for the robot and the object
-ROBOT_MARKER_ID = 4
-OBJECT_MARKER_ID = 5
+ROBOT_MARKER_ID = 18
+OBJECT_MARKER_ID = 17
 
 # Define the dictionary for ArUco markers
 marker_dict = aruco.getPredefinedDictionary(aruco.DICT_5X5_250)
